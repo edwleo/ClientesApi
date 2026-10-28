@@ -23,10 +23,28 @@ namespace ClientesApi.Controllers
         //IEnumerable   : Define un set de datos (colección <Tipo>)
         //ActionResul   : Valor a obtener (colección definida en el modelo)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Cliente>>> Listar()
+        public async Task<ActionResult<IEnumerable<Cliente>>> Listar([FromQuery] string? buscar)
         {
-            var clientes = await _context.Clientes.AsNoTracking().ToListAsync();
-            return Ok(clientes);
+            //var clientes = await _context.Clientes.AsNoTracking().ToListAsync();
+            //return Ok(clientes);
+            var consulta = _context.Clientes.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(buscar))
+            {
+                var texto = buscar.Trim();
+                consulta = consulta.Where(c =>
+                    c.Apellidos.Contains(texto) ||
+                    c.Nombres.Contains(texto) ||
+                    c.Dni.Contains(texto)
+                    );
+            }
+
+            var lista = await consulta
+                .OrderBy(c => c.Apellidos).ThenBy(c => c.Nombres)
+                .Take(200)
+                .ToListAsync();
+
+            return Ok(lista);
         }
 
         //GET: api/clientes/1 -> Busca clientes por su ID
